@@ -230,5 +230,3 @@ For issues and questions:
 4. Ensure XAMPP services are running
 
 ---
-
-**Happy Coding! 🎓**
