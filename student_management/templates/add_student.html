@@ -12,18 +12,13 @@
                 </h4>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('add_student') }}" id="addStudentForm">
+                <form method="POST" action="{{ url_for('add_student') }}" id="addStudentForm" enctype="multipart/form-data"></form>
                     <div class="mb-3">
                         <label for="name" class="form-label">
                             <i class="bi bi-person me-1"></i>Student Name <span class="text-danger">*</span>
                         </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="name" 
-                               name="name" 
-                               placeholder="Enter student's full name"
-                               required
-                               maxlength="100">
+                        <input type="text" class="form-control" id="name" name="name"
+                            placeholder="Enter student's full name" required maxlength="100">
                         <div class="form-text">Please enter the student's full name (maximum 100 characters).</div>
                     </div>
 
@@ -31,15 +26,9 @@
                         <label for="roll_number" class="form-label">
                             <i class="bi bi-hash me-1"></i>Roll Number <span class="text-danger">*</span>
                         </label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="roll_number" 
-                               name="roll_number" 
-                               placeholder="Enter roll number (e.g., R001)"
-                               required
-                               maxlength="50"
-                               pattern="[A-Za-z0-9]+"
-                               title="Roll number should contain only letters and numbers">
+                        <input type="text" class="form-control" id="roll_number" name="roll_number"
+                            placeholder="Enter roll number (e.g., R001)" required maxlength="50" pattern="[A-Za-z0-9]+"
+                            title="Roll number should contain only letters and numbers">
                         <div class="form-text">Roll number must be unique and contain only letters and numbers.</div>
                     </div>
 
@@ -66,6 +55,31 @@
                             <option value="Other">Other</option>
                         </select>
                         <div class="form-text">Select the primary subject for this student.</div>
+                    </div>
+                    <!-- CNIC Front Image -->
+                    <div class="mb-3">
+                        <label for="cnic_front" class="form-label">
+                            <i class="bi bi-card-image me-1"></i>CNIC Front Image <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="cnic_front" name="cnic_front" accept="image/*"
+                            required>
+                        <div class="form-text">Upload the front side of student's CNIC (JPG, PNG, max 2MB).</div>
+                        <!-- Preview -->
+                        <img id="cnic_front_preview" src="#" alt="Front Preview"
+                            style="display:none; margin-top:10px; max-height:150px; border-radius:8px; border:1px solid #ccc;">
+                    </div>
+
+                    <!-- CNIC Back Image -->
+                    <div class="mb-4">
+                        <label for="cnic_back" class="form-label">
+                            <i class="bi bi-card-image me-1"></i>CNIC Back Image <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" class="form-control" id="cnic_back" name="cnic_back" accept="image/*"
+                            required>
+                        <div class="form-text">Upload the back side of student's CNIC (JPG, PNG, max 2MB).</div>
+                        <!-- Preview -->
+                        <img id="cnic_back_preview" src="#" alt="Back Preview"
+                            style="display:none; margin-top:10px; max-height:150px; border-radius:8px; border:1px solid #ccc;">
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -94,6 +108,7 @@
                     <li>Student name can contain letters, spaces, and special characters.</li>
                     <li>Roll number should contain only letters and numbers (no spaces).</li>
                     <li>Choose the most appropriate subject from the dropdown list.</li>
+                    <li>Upload front and back images of CNIC.</li>
                 </ul>
             </div>
         </div>
@@ -103,27 +118,65 @@
 
 {% block scripts %}
 <script>
-document.getElementById('addStudentForm').addEventListener('submit', function(e) {
-    const name = document.getElementById('name').value.trim();
-    const rollNumber = document.getElementById('roll_number').value.trim();
-    const subject = document.getElementById('subject').value;
+    document.getElementById('addStudentForm').addEventListener('submit', function (e) {
+        const name = document.getElementById('name').value.trim();
+        const rollNumber = document.getElementById('roll_number').value.trim();
+        const subject = document.getElementById('subject').value;
 
-    if (!name || !rollNumber || !subject) {
-        e.preventDefault();
-        alert('Please fill in all required fields.');
-        return false;
-    }
+        if (!name || !rollNumber || !subject) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
 
-    if (rollNumber.length < 3) {
-        e.preventDefault();
-        alert('Roll number should be at least 3 characters long.');
-        return false;
+        if (rollNumber.length < 3) {
+            e.preventDefault();
+            alert('Roll number should be at least 3 characters long.');
+            return false;
+        }
+    });
+
+    // CNIC Front Preview
+document.getElementById('cnic_front').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('CNIC front image must be less than 2MB.');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const preview = document.getElementById('cnic_front_preview');
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
     }
 });
 
-// Auto-format roll number to uppercase
-document.getElementById('roll_number').addEventListener('input', function(e) {
-    e.target.value = e.target.value.toUpperCase();
+// CNIC Back Preview
+document.getElementById('cnic_back').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('CNIC back image must be less than 2MB.');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const preview = document.getElementById('cnic_back_preview');
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
 });
+
+    // Auto-format roll number to uppercase
+    document.getElementById('roll_number').addEventListener('input', function (e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
 </script>
 {% endblock %}
