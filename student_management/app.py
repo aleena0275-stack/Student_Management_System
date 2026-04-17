@@ -19,11 +19,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # Ensure session is properly configured
 app.secret_key = app.config['SECRET_KEY']
 
-# Configure session settings
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour session timeout
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Database connection function
 def get_db_connection():
     """Establish database connection with error handling"""
     try:
@@ -130,7 +128,6 @@ def add_student():
                     back_file.save(os.path.join(app.config['UPLOAD_FOLDER'], back_filename))
                     cnic_back_path = f"uploads/cnic/{back_filename}"
 
-            # Validate form data
             if not name or not roll_number or not subject:
                 flash('All fields are required!', 'error')
                 return render_template('add_student.html')
