@@ -5,10 +5,16 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import mysql.connector
 from mysql.connector import Error
 from config import Config
+import os
+from werkzeug.utils import secure_filename
 
 # Initialize Flask App
 app = Flask(__name__)
 app.config.from_object(Config)
+UPLOAD_FOLDER = 'static/uploads/cnic'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Ensure session is properly configured
 app.secret_key = app.config['SECRET_KEY']
@@ -91,6 +97,12 @@ def index():
         print(f"Index route error: {e}")
         flash(f"Error loading students: {e}", 'error')
         return render_template('index.html', students=[])
+    
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/add', methods=['GET', 'POST'])  # ← یہ پہلے سے ہے
+def add_student():
 
 @app.route('/add', methods=['GET', 'POST'])
 def add_student():
@@ -101,6 +113,25 @@ def add_student():
             name = request.form.get('name', '').strip()
             roll_number = request.form.get('roll_number', '').strip().upper()
             subject = request.form.get('subject', '').strip()
+            cnic_front_path = None
+cnic_back_path = None
+
+if 'cnic_front' in request.files:
+    front_file = request.files['cnic_front']
+    if front_file and allowed_file(front_file.filename):
+        front_filename = secure_filename(f"{roll_number}_front_{front_file.filename}")
+        front_file.save(os.path.join(app.config['UPLOAD_FOLDER'], front_filename))
+        cnic_front_path = f"uploads/cnic/{front_filename}"
+
+if 'cnic_back' in request.files:
+    back_file = request.files['cnic_back']
+    if back_file and allowed_file(back_file.filename):
+        back_filename = secure_filename(f"{roll_number}_back_{back_file.filename}")
+        back_file.save(os.path.join(app.config['UPLOAD_FOLDER'], back_filename))
+        cnic_back_path = f"uploads/cnic/{back_filename}"
+
+# Validate form data ← یہ پہلے سے ہے
+if not name or not roll_number or not subject:
             
             # Validate form data
             if not name or not roll_number or not subject:
@@ -117,11 +148,10 @@ def add_student():
             
             # Insert new student
             insert_query = """
-                INSERT INTO students (name, roll_number, subject) 
-                VALUES (%s, %s, %s)
-            """
-            result = execute_query(insert_query, (name, roll_number, subject), commit=True)
-            
+    INSERT INTO students (name, roll_number, subject, cnic_front, cnic_back) 
+    VALUES (%s, %s, %s, %s, %s)
+"""
+            result = execute_query(insert_query, (name, roll_number, subject, cnic_front_path, cnic_back_path), commit=True)
             if result:
                 flash(f'Student "{name}" added successfully!', 'success')
                 return redirect(url_for('index'))
